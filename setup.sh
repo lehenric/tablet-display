@@ -18,6 +18,7 @@ cleanup() {
     xrandr --output $VIRTUAL_DISP --off
     xrandr --delmode $VIRTUAL_DISP "$MODE"
     xrandr --rmmode "$MODE"
+    [[ -n $FORWARD ]] && adb reverse --remove tcp:5900
 }
 trap "cleanup" TERM INT HUP
 
@@ -28,6 +29,12 @@ xrandr --newmode `xargs printf '%s ' <<< "$CVT"` # use echo to bypass adding quo
 xrandr --addmode $VIRTUAL_DISP "$MODE"
 xrandr --output $VIRTUAL_DISP --mode "$MODE" --left-of eDP1
 
+# TODO check if andorid higher then 4.4
+if [[ $(adb devices | wc -l) -ge 3 ]]; then
+    echo "Reversing port 5900 on usb"
+    adb reverse tcp:5900 tcp:5900
+    export FORWARD=1
+    fi
 echo "Prepared xrandr for x11vnc, press ENTER to start x11vnc"
 read
 x11vnc -clip xinerama0 --forever &
